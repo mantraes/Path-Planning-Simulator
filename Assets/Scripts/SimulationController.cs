@@ -59,7 +59,6 @@ public class SimulationController : MonoBehaviour {
 
     //Update is called over fixed interval
     void FixedUpdate () {
-        object[] depthTree = new object[4];
         GPS();
     }
 
@@ -92,28 +91,32 @@ public class SimulationController : MonoBehaviour {
 
     }
 
-    void lidar(object[] treeDirections)
+    //Returns wheather you need to turn or not 
+    bool lidar(object[] treeDirections)
     {
-
-        ArrayList magDistancesFrom = new ArrayList();
-        ArrayList angFrom = new ArrayList();
-        //float[] mag = new float[numberOfTrees];
-        //float[] ang = new float[numberOfTrees];
+        Vector2 temp = new Vector2(0,0);
+        Vector2[] treePolor = new Vector2[numberOfTrees]; 
+        bool turn = true;
         for(int i = 0;i < numberOfTrees;i++)
         {
             treeLocalPositions[i] = AForest[i].transform.localPosition;
-            //mag[i] = Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z));
-            //ang[i] = Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg;
-            magDistancesFrom.Add(Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z)));
-            angFrom.Add(Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg);
+            temp.x = (Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z)));
+            // Condition in case z is equal to zero
+            if(treeLocalPositions[i].z == 0 && treeLocalPositions[i].x != 0) temp.y = (treeLocalPositions[i].x/ Mathf.Abs(treeLocalPositions[i].x))* 90f;
+            else if (treeLocalPositions[i].z == 0 && treeLocalPositions[i].z == 0) temp.y = 0;
+            else temp.y = (Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg);
+            if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z > 0) temp.y = temp.y + 180f;
+            else if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z < 0) temp.y = temp.y - 180f; 
+            treePolor[i] = temp;
+            if (treePolor[i].y > 0) turn = false;
         }
-        magDistancesFrom.Sort();
-        angFrom.Sort();
-        treeDirections[0] = magDistancesFrom[0];
-        treeDirections[1] = angFrom[0];
-        treeDirections[2] = magDistancesFrom[1];
-        treeDirections[3] = angFrom[1];
-        return;
+
+        TreeSort(treePolor);
+        treeDirections[0] = treePolor[0].x;
+        treeDirections[1] = treePolor[0].y;
+        treeDirections[2] = treePolor[1].x;
+        treeDirections[3] = treePolor[1].y;
+        return turn;
     }
     //Works
     Vector3 GPS()
@@ -121,7 +124,24 @@ public class SimulationController : MonoBehaviour {
         Ret = Car.transform.position;
         return Ret;
     }
-   
-  
+
+    void TreeSort(Vector2[] polarTrees){
+    /* polarTrees is an n-element array of  Vector2's*/
+    int i, j, min;
+    Vector2 tmp;
+    /* for i from 0 to n-2...*/
+    for (i=0; i<numberOfTrees-1; i++) {
+    /* find minimum element from i to numberOfTrees-1 */
+    min = i; /* i-th element might be minimum */
+    for (j=i+1; j< numberOfTrees; j++) {
+    if (polarTrees[j].x < polarTrees[min].x && polarTrees[j].y > 0) min = j;
+    }
+    /* exchange a[i] and a[min] */
+    tmp = polarTrees[i]; 
+    polarTrees[i] = polarTrees[min];
+    polarTrees[min]= tmp;
+    }
+    return;
+}
 
 }
