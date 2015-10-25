@@ -95,15 +95,18 @@ public class SimulationController : MonoBehaviour {
     void lidar(object[] treeDirections)
     {
 
-        ArrayList magDistancesFrom = new ArrayList(numberOfTrees);
-        ArrayList angFrom = new ArrayList(numberOfTrees);
+        ArrayList magDistancesFrom = new ArrayList();
+        ArrayList angFrom = new ArrayList();
+        //float[] mag = new float[numberOfTrees];
+        //float[] ang = new float[numberOfTrees];
         for(int i = 0;i < numberOfTrees;i++)
         {
             treeLocalPositions[i] = AForest[i].transform.localPosition;
-            magDistancesFrom[i] = Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z));
-            angFrom[i] = Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg;
+            //mag[i] = Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z));
+            //ang[i] = Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg;
+            magDistancesFrom.Add(Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z)));
+            angFrom.Add(Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg);
         }
-
         magDistancesFrom.Sort();
         angFrom.Sort();
         treeDirections[0] = magDistancesFrom[0];
