@@ -65,6 +65,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\CarMover.cs" />
     <Compile Include="Assets\Scripts\SimulationController.cs" />
   </ItemGroup>
   <ItemGroup>

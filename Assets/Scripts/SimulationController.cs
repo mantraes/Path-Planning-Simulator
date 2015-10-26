@@ -23,10 +23,8 @@ public class SimulationController : MonoBehaviour {
     private GameObject[] AForest;
     //Plane GameObject
     public GameObject Map;
-    //Restart Option
-    private bool restart = false;
-	// Use this for initialization
-
+    public CarMover carMover;
+    // Use this for initialization
     void awake()
     {
         xOfMap = 4f;
@@ -34,6 +32,7 @@ public class SimulationController : MonoBehaviour {
         radiusTree = 0.125f;
         heightTree = 2.5f;
         numberOfTrees = 20;
+
     }
 	void Start () {
         sizeOfTree = new Vector3(2*radiusTree, heightTree, 2*radiusTree);
@@ -44,22 +43,17 @@ public class SimulationController : MonoBehaviour {
         AForest = new GameObject[numberOfTrees];
         treeLocalPositions = new Vector3[numberOfTrees];
         SpawnForest();
-        object[] depthTree = new object[4];
-        lidar(depthTree);
-        restart = true;
+
 	}
 	
 	// Update is called once per frame
 	void Update () {
-        if (restart == true && Input.GetKeyDown(KeyCode.R))
-        { 
-            Application.LoadLevel(Application.loadedLevel);
-        }
+    
 	}
 
     //Update is called over fixed interval
     void FixedUpdate () {
-        GPS();
+        carMover.MoveCar();
     }
 
     //Function to Spawn Forest
@@ -82,7 +76,7 @@ public class SimulationController : MonoBehaviour {
                 spawnRotation = Quaternion.identity;
                 GO = Instantiate(Tree, spawnPosition, spawnRotation) as GameObject;
                 AForest[i] = GO;
-                AForest[i].transform.parent = Car.transform;
+                AForest[i].transform.parent = Forest.transform;
                 i++;
             }
             k++;
@@ -92,14 +86,16 @@ public class SimulationController : MonoBehaviour {
     }
 
     //Returns wheather you need to turn or not 
-    bool lidar(object[] treeDirections)
+     public bool lidar(Vector3[] treeDirections)
     {
         Vector2 temp = new Vector2(0,0);
         Vector2[] treePolor = new Vector2[numberOfTrees]; 
-        bool turn = true;
-        for(int i = 0;i < numberOfTrees;i++)
-        {
-            treeLocalPositions[i] = AForest[i].transform.localPosition;
+        bool stop = true;
+        Vector3[] treePositions = new Vector3[numberOfTrees];
+         for(int i = 0;i < numberOfTrees;i++)
+        {   
+            treePositions[i] = AForest[i].transform.position;
+            treeLocalPositions[i] = treePositions[i] - Car.transform.position;  
             temp.x = (Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z)));
             // Condition in case z is equal to zero
             if(treeLocalPositions[i].z == 0 && treeLocalPositions[i].x != 0) temp.y = (treeLocalPositions[i].x/ Mathf.Abs(treeLocalPositions[i].x))* 90f;
@@ -108,27 +104,26 @@ public class SimulationController : MonoBehaviour {
             if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z > 0) temp.y = temp.y + 180f;
             else if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z < 0) temp.y = temp.y - 180f; 
             treePolor[i] = temp;
-            if (treePolor[i].y > 0) turn = false;
+            if (treePolor[i].y > 0) stop = false;
         }
 
-        TreeSort(treePolor);
-        treeDirections[0] = treePolor[0].x;
-        treeDirections[1] = treePolor[0].y;
-        treeDirections[2] = treePolor[1].x;
-        treeDirections[3] = treePolor[1].y;
-        return turn;
+        TreeSort(treePolor,treePositions);
+        treeDirections[0] = treeLocalPositions[0];
+        treeDirections[1] = treeLocalPositions[1];
+        return stop;
     }
     //Works
-    Vector3 GPS()
+    public Vector3 GPS()
     {   Vector3 Ret = new Vector3(0,0,0);
         Ret = Car.transform.position;
         return Ret;
     }
 
-    void TreeSort(Vector2[] polarTrees){
+    void TreeSort(Vector2[] polarTrees,Vector3[] cartesianTrees){
     /* polarTrees is an n-element array of  Vector2's*/
     int i, j, min;
     Vector2 tmp;
+    Vector3 tmp3;
     /* for i from 0 to n-2...*/
     for (i=0; i<numberOfTrees-1; i++) {
     /* find minimum element from i to numberOfTrees-1 */
@@ -137,11 +132,12 @@ public class SimulationController : MonoBehaviour {
     if (polarTrees[j].x < polarTrees[min].x && polarTrees[j].y > 0) min = j;
     }
     /* exchange a[i] and a[min] */
-    tmp = polarTrees[i]; 
-    polarTrees[i] = polarTrees[min];
-    polarTrees[min]= tmp;
+    tmp = polarTrees[i]; tmp3 = cartesianTrees[i];
+    polarTrees[i] = polarTrees[min]; cartesianTrees[i] = cartesianTrees[min];
+    polarTrees[min] = tmp; cartesianTrees[min] = tmp3;
     }
     return;
 }
 
+ 
 }
