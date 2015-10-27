@@ -15,7 +15,7 @@ public class SimulationController : MonoBehaviour {
     private Vector3 sizeOfTree;
     private Vector3[] treeLocalPositions;
     //Number of trees
-    public int numberOfTrees = 20;
+    private int numberOfTrees = 20;
     //Tree GameObject
     public GameObject Tree;
     private GameObject GO;
@@ -23,8 +23,12 @@ public class SimulationController : MonoBehaviour {
     private GameObject[] AForest;
     //Plane GameObject
     public GameObject Map;
-    public CarMover carMover;
     // Use this for initialization
+    private Vector3[] depthTree = new Vector3[2];
+    private Vector3 currentPosition = new Vector3(0, .5f, -18f);
+    private Vector3 nextSpot;
+    private Vector3 debug;
+    private float speed = .1f;
     void awake()
     {
         xOfMap = 4f;
@@ -42,18 +46,19 @@ public class SimulationController : MonoBehaviour {
         Map.transform.localScale = sizeOfMap;
         AForest = new GameObject[numberOfTrees];
         treeLocalPositions = new Vector3[numberOfTrees];
+        nextSpot = currentPosition;
         SpawnForest();
 
 	}
 	
 	// Update is called once per frame
 	void Update () {
-    
+
 	}
 
     //Update is called over fixed interval
     void FixedUpdate () {
-        carMover.MoveCar();
+        MoveCar();
     }
 
     //Function to Spawn Forest
@@ -96,13 +101,13 @@ public class SimulationController : MonoBehaviour {
         {   
             treePositions[i] = AForest[i].transform.position;
             treeLocalPositions[i] = treePositions[i] - Car.transform.position;  
-            temp.x = (Mathf.Sqrt((treeLocalPositions[i].x * treeLocalPositions[i].x) + (treeLocalPositions[i].z * treeLocalPositions[i].z)));
+            temp.x = (Mathf.Sqrt((treeLocalPositions[i].x*treeLocalPositions[i].x)+(treeLocalPositions[i].z*treeLocalPositions[i].z)));
             // Condition in case z is equal to zero
-            if(treeLocalPositions[i].z == 0 && treeLocalPositions[i].x != 0) temp.y = (treeLocalPositions[i].x/ Mathf.Abs(treeLocalPositions[i].x))* 90f;
+            if(treeLocalPositions[i].z == 0 && treeLocalPositions[i].x != 0) temp.y=(treeLocalPositions[i].x/Mathf.Abs(treeLocalPositions[i].x))*90f;
             else if (treeLocalPositions[i].z == 0 && treeLocalPositions[i].z == 0) temp.y = 0;
             else temp.y = (Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg);
-            if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z > 0) temp.y = temp.y + 180f;
-            else if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z < 0) temp.y = temp.y - 180f; 
+            if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z > 0) temp.y = temp.y+180f;
+            else if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z<0) temp.y = temp.y-180f; 
             treePolor[i] = temp;
             if (treePolor[i].y > 0) stop = false;
         }
@@ -138,6 +143,34 @@ public class SimulationController : MonoBehaviour {
     }
     return;
 }
+
+    void MoveCar()
+    {
+        float step = speed;
+        bool stop;
+        if(currentPosition != nextSpot)
+        {
+            Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);            
+        }
+        currentPosition = GPS();
+        stop = lidar(depthTree);
+        nextSpot = spotDetermination(depthTree);
+    }
+
+    Vector3 spotDetermination(Vector3[] treesPoints)
+    {
+        Vector3 ret;
+        if (treesPoints[0].x == treesPoints[1].x && treesPoints[0].z == treesPoints[1].z)
+            ret = Car. transform.position;
+        else
+        {
+            ret.x = (treesPoints[0].x + treesPoints[1].x)/2;
+            ret.y = Car.transform.position.y;
+            ret.z = (treesPoints[0].z + treesPoints[1].z)/2;
+        }
+        return ret;
+
+    }
 
  
 }

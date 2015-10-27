@@ -4,7 +4,7 @@ using System.Collections;
 
 public class CarMover : MonoBehaviour {
 
-        public SimulationController simulationController;
+        private SimulationController simulationController;
         private Vector3[] depthTree = new Vector3[2];
         private Vector3 currentPosition = new Vector3(0,.5f,-18f);
         private Vector3 nextSpot;
@@ -36,7 +36,7 @@ public class CarMover : MonoBehaviour {
 
     }
 
-    public void MoveCar() {
+     void MoveCar() {
         float step = speed;
         bool stop;
         while (currentPosition != nextSpot)
@@ -45,7 +45,7 @@ public class CarMover : MonoBehaviour {
             currentPosition = simulationController.GPS();
         }
         stop = simulationController.lidar(depthTree);
-        while (stop) ;
+        //while (stop) ;
         nextSpot = spotDetermination(depthTree);
     }
 
