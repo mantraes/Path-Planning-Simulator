@@ -63,8 +63,8 @@ public class SimulationController : MonoBehaviour {
 
     //Update is called over fixed interval
     void FixedUpdate () {
-        //if (inProcessOfTurning) turn();
-      MoveCar();
+       if (inProcessOfTurning) turn();
+       else MoveCar();
     }
 
     //Function to Spawn Forest
@@ -109,9 +109,9 @@ public class SimulationController : MonoBehaviour {
             treeLocalPositions[i] = treePositions[i] - Car.transform.position;  
             temp.x = (Mathf.Sqrt((treeLocalPositions[i].x*treeLocalPositions[i].x)+(treeLocalPositions[i].z*treeLocalPositions[i].z)));
             // Condition in case z is equal to zero
-            if(treeLocalPositions[i].z != 0 && treeLocalPositions[i].x == 0) temp.y=(treeLocalPositions[i].x/Mathf.Abs(treeLocalPositions[i].x))*90f;
+            if(treeLocalPositions[i].z != 0 && treeLocalPositions[i].x == 0) temp.y=(treeLocalPositions[i].x/Mathf.Abs(treeLocalPositions[i].x))*90f*direction;
             else if (treeLocalPositions[i].z == 0 && treeLocalPositions[i].x == 0) temp.y = 0;
-            else temp.y = (Mathf.Atan2(treeLocalPositions[i].z, treeLocalPositions[i].x) * Mathf.Rad2Deg);
+            else temp.y = (Mathf.Atan2(treeLocalPositions[i].z, treeLocalPositions[i].x) * Mathf.Rad2Deg)*direction;
             treePolor[i] = temp;
             if (Mathf.Round(treePolor[i].y) != 180 && treePolor[i].y > 0) turn = false;
         }
@@ -164,7 +164,7 @@ public class SimulationController : MonoBehaviour {
         if (turn)
         {
             inProcessOfTurning = true;
-            nextSpot = currentPosition+new Vector3(4f, 0, 5f*direction);
+            nextSpot = currentPosition+new Vector3(5f, 0, 12f*direction);
             nextRotation = currentPosition+new Vector3(5f,0,0);
             direction = -1*direction;
         }
@@ -191,7 +191,8 @@ public class SimulationController : MonoBehaviour {
         Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);
         //newDir = Vector3.RotateTowards(Car.transform.position, nextRotation, step ,0f);
         //transform.rotation = Quaternion.LookRotation(newDir);
-        //if(Car.transform.position == nextSpot ) inProcessOfTurning = false;
+        if(Car.transform.position == nextSpot ) 
+            inProcessOfTurning = false;
         return;
     }
 }
