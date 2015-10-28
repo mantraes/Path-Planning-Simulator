@@ -29,6 +29,7 @@ public class SimulationController : MonoBehaviour {
     private Vector3 nextSpot;
     private Vector3 debug;
     private float speed = .1f;
+    bool inProcessOfTurning;
     void awake()
     {
         xOfMap = 4f;
@@ -39,6 +40,7 @@ public class SimulationController : MonoBehaviour {
 
     }
 	void Start () {
+        inProcessOfTurning = false;
         sizeOfTree = new Vector3(2*radiusTree, heightTree, 2*radiusTree);
         sizeOfMap = new Vector3(xOfMap,1,zOfMap);
         OrientationOfMap = Quaternion.identity;
@@ -95,7 +97,7 @@ public class SimulationController : MonoBehaviour {
     {
         Vector2 temp = new Vector2(0,0);
         Vector2[] treePolor = new Vector2[numberOfTrees]; 
-        bool stop = true;
+        bool turn = true;
         Vector3[] treePositions = new Vector3[numberOfTrees];
          for(int i = 0;i < numberOfTrees;i++)
         {   
@@ -105,17 +107,15 @@ public class SimulationController : MonoBehaviour {
             // Condition in case z is equal to zero
             if(treeLocalPositions[i].z == 0 && treeLocalPositions[i].x != 0) temp.y=(treeLocalPositions[i].x/Mathf.Abs(treeLocalPositions[i].x))*90f;
             else if (treeLocalPositions[i].z == 0 && treeLocalPositions[i].z == 0) temp.y = 0;
-            else temp.y = (Mathf.Atan2(treeLocalPositions[i].x, treeLocalPositions[i].z) * Mathf.Rad2Deg);
-            if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z > 0) temp.y = temp.y+180f;
-            else if (treeLocalPositions[i].x < 0 && treeLocalPositions[i].z<0) temp.y = temp.y-180f; 
+            else temp.y = (Mathf.Atan2(treeLocalPositions[i].z, treeLocalPositions[i].x) * Mathf.Rad2Deg);
             treePolor[i] = temp;
-            if (treePolor[i].y > 0) stop = false;
+            if (treePolor[i].y > 0) turn = false;
         }
 
         TreeSort(treePolor,treePositions);
-        treeDirections[0] = treeLocalPositions[0];
-        treeDirections[1] = treeLocalPositions[1];
-        return stop;
+        treeDirections[0] = treePositions[0];
+        treeDirections[1] = treePositions[1];
+        return turn;
     }
     //Works
     public Vector3 GPS()
@@ -147,13 +147,14 @@ public class SimulationController : MonoBehaviour {
     void MoveCar()
     {
         float step = speed;
-        bool stop;
+        bool turn;
         if(currentPosition != nextSpot)
         {
             Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);            
         }
         currentPosition = GPS();
-        stop = lidar(depthTree);
+        turn = lidar(depthTree);
+        //if (turn) inProcessOfTurning = true;
         nextSpot = spotDetermination(depthTree);
     }
 
@@ -169,8 +170,11 @@ public class SimulationController : MonoBehaviour {
             ret.z = (treesPoints[0].z + treesPoints[1].z)/2;
         }
         return ret;
-
     }
-
+    void turn()
+    {
+        float step = speed;
+        Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);
+    }
  
 }
