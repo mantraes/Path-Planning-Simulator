@@ -24,14 +24,18 @@ public class SimulationController : MonoBehaviour {
     //Plane GameObject
     public GameObject Map;
     // Use this for initialization
+    private Vector2[] treePolor; 
     private Vector3[] depthTree = new Vector3[2];
     private Vector3 currentPosition = new Vector3(0, .5f, -18f);
     private Vector3 nextSpot;
     private Vector3 nextRotation;
     private Vector3 debug;
+    private Vector3 targetAngles;
     private float speed = .1f;
     private bool inProcessOfTurning;
     private float direction;
+    private bool stopped;
+    private bool rotating;
     void awake()
     {
         xOfMap = 4f;
@@ -43,6 +47,8 @@ public class SimulationController : MonoBehaviour {
     }
 	void Start () {
         inProcessOfTurning = false;
+        stopped = false;
+        rotating = false;
         direction = 1;
         sizeOfTree = new Vector3(2*radiusTree, heightTree, 2*radiusTree);
         sizeOfMap = new Vector3(xOfMap,1,zOfMap);
@@ -63,8 +69,10 @@ public class SimulationController : MonoBehaviour {
 
     //Update is called over fixed interval
     void FixedUpdate () {
-       if (inProcessOfTurning) turn();
-       else MoveCar();
+        if (stopped) ;
+        else if (inProcessOfTurning) turn();
+        //else if (rotating) rotate();
+        else MoveCar();
     }
 
     //Function to Spawn Forest
@@ -100,7 +108,7 @@ public class SimulationController : MonoBehaviour {
      public bool lidar(Vector3[] treeDirections)
     {
         Vector2 temp = new Vector2(0,0);
-        Vector2[] treePolor = new Vector2[numberOfTrees]; 
+        treePolor = new Vector2[numberOfTrees]; 
         bool turn = true;
         Vector3[] treePositions = new Vector3[numberOfTrees];
          for(int i = 0;i < numberOfTrees;i++)
@@ -113,7 +121,7 @@ public class SimulationController : MonoBehaviour {
             else if (treeLocalPositions[i].z == 0 && treeLocalPositions[i].x == 0) temp.y = 0;
             else temp.y = (Mathf.Atan2(treeLocalPositions[i].z, treeLocalPositions[i].x) * Mathf.Rad2Deg)*direction;
             treePolor[i] = temp;
-            if (Mathf.Round(treePolor[i].y) != 180 && treePolor[i].y > 0) turn = false;
+            if (Mathf.Round(treePolor[i].y) < 178 && treePolor[i].y > 2) turn = false;
         }
 
         TreeSort(treePolor,treePositions);
@@ -138,9 +146,9 @@ public class SimulationController : MonoBehaviour {
     /* find minimum element from i to numberOfTrees-1 */
     min = i; /* i-th element might be minimum */
     for (j=i+1; j< numberOfTrees; j++) {
-        if (Mathf.Round(polarTrees[min].y) == 180 || Mathf.Round(polarTrees[min].y) == 0) 
+        if (Mathf.Round(polarTrees[min].y) > 178 || (Mathf.Round(polarTrees[min].y) < 2)) 
             min = j;
-        else if (polarTrees[j].x < polarTrees[min].x && polarTrees[j].y > 0 && Mathf.Round(polarTrees[j].y) != 180) 
+        else if (polarTrees[j].x < polarTrees[min].x && polarTrees[j].y > 2 && Mathf.Round(polarTrees[j].y) < 178) 
             min = j;
     }
     /* exchange a[i] and a[min] */
@@ -164,7 +172,7 @@ public class SimulationController : MonoBehaviour {
         if (turn)
         {
             inProcessOfTurning = true;
-            nextSpot = currentPosition+new Vector3(5f, 0, 12f*direction);
+            nextSpot = currentPosition+new Vector3(5f, 0, 7f*direction);
             nextRotation = currentPosition+new Vector3(5f,0,0);
             direction = -1*direction;
         }
@@ -191,8 +199,34 @@ public class SimulationController : MonoBehaviour {
         Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);
         //newDir = Vector3.RotateTowards(Car.transform.position, nextRotation, step ,0f);
         //transform.rotation = Quaternion.LookRotation(newDir);
-        if(Car.transform.position == nextSpot ) 
+        if (Car.transform.position == nextSpot)
+        {
             inProcessOfTurning = false;
+            rotating = true;
+            lidar(depthTree);
+            stopped = checkStop(treePolor);
+            targetAngles = new Vector3(0, Car.transform.eulerAngles.y + 180f * Vector3.up.y,0);
+        }
         return;
     }
+
+    bool checkStop(Vector2[] treePoints)
+    {
+        bool ret = true;
+        if ((treePoints[0].y < 2 && treePoints[1].y > 178) || (treePoints[1].y < 2 && treePoints[0].y > 178)) ret = false;
+        else if ((treePoints[0].y >= 90 && treePoints[1].y <= 90) || (treePoints[0].y <= 90 && treePoints[1].y >= 90)) ret = false; 
+        return ret;
+    }
+
+    void rotate()
+    {   float step =  15f;
+        Car.transform.eulerAngles = Vector3.Lerp(transform.eulerAngles, targetAngles, step*Time.deltaTime);
+        if (Mathf.Round(Car.transform.eulerAngles.y) == Mathf.Round(targetAngles.y)) rotating = false;
+        else if ((Mathf.Round(Car.transform.eulerAngles.y) == 360 && Mathf.Round(targetAngles.y) == 0) || (Mathf.Round(Car.transform.eulerAngles.y) == 0 && Mathf.Round(targetAngles.y) == 360)) rotating = false;
+        return;
+    }
+
+
+
+
 }
