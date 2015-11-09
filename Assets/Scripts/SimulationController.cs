@@ -2,40 +2,55 @@
 using System.Collections;
 public class SimulationController : MonoBehaviour {
 
-    //Size of Map meters
+    //Size of Map variables x and y
     public float xOfMap;
     public float zOfMap;
     private Vector3 sizeOfMap;
     private Vector3 locationOfMap = new Vector3(0,0,0);
     private Quaternion OrientationOfMap = new Quaternion();
+    //Conection to Game Object J5
     public GameObject Car;
-    //Size of tree meters
+    //Size of tree 
     public float radiusTree;
     public float heightTree;
     private Vector3 sizeOfTree;
+    //Holds the location of trees local position to the bot
     private Vector3[] treeLocalPositions;
     //Number of trees
     private int numberOfTrees = 20;
     //Tree GameObject
     public GameObject Tree;
-    private GameObject GO;
+    //Connection to parent gameobject of all the trees 
     public GameObject Forest;
+    //An array that holds all the tree game objects
     private GameObject[] AForest;
-    //Plane GameObject
+    //Connection to Plane GameObject that acts as Field
     public GameObject Map;
-    // Use this for initialization
+    // Holds the polor locations of the trees with respect to the bot
     private Vector2[] treePolor; 
+    // Holds the location of the two closest trees in absolute coordinates
     private Vector3[] depthTree = new Vector3[2];
+    // Hold location of bot's current position
     private Vector3 currentPosition = new Vector3(0, .5f, -18f);
+    // Holds location of the next spot the bot needs to head towards
     private Vector3 nextSpot;
+    //not used right now
     private Vector3 nextRotation;
+    //Vector3 used for debuging
     private Vector3 debug;
+    //not used right now
     private Vector3 targetAngles;
+    //Variable that holds the speed for the bot
     private float speed = .1f;
+    //bool that is true if bot is turning
     private bool inProcessOfTurning;
+    //Holds wich direction bot is going (if positive bot is heading in positive Z direction) 
     private float direction;
+    //bool that is true if the bot is stopped
     private bool stopped;
+    //bool that is true if it is time to rotate
     private bool rotating;
+    //use this for initiation of variables before the start
     void awake()
     {
         xOfMap = 4f;
@@ -81,20 +96,22 @@ public class SimulationController : MonoBehaviour {
         Instantiate(Map,locationOfMap,OrientationOfMap);
         int i = 0; 
         float k = 0;
-        float xscale = 5f;
-        float zscale = 2.5f;
-        int treesInRow = 4;
-        float xshift = -8f;
-        float zshift = -10f;
+        float xscale = 5f; //used to scale seperation of trees in x direction
+        float zscale = 2.5f; //used to scale seperation of tree in z direction
+        int treesInColumn = 4; 
+        float xshift = -8f; // Gives the shift of the bunch of trees in the x direction
+        float zshift = -10f; // Gives the shift of the bunch of trees in the z direction
+        GameObject temp; //Temp gameobject to store created trees 
+        //Loop instatiates the trees in the parent forest
         while (i < numberOfTrees)
         {
-            for (float j = 0; i < numberOfTrees && j < treesInRow;j++)
+            for (float j = 0; i < numberOfTrees && j < treesInColumn;j++)
             {
                 Vector3 spawnPosition = new Vector3(k*xscale + xshift, 2.5f, j*zscale + zshift);
                 Quaternion spawnRotation = new Quaternion();
                 spawnRotation = Quaternion.identity;
-                GO = Instantiate(Tree, spawnPosition, spawnRotation) as GameObject;
-                AForest[i] = GO;
+                temp = Instantiate(Tree, spawnPosition, spawnRotation) as GameObject;
+                AForest[i] = temp;
                 AForest[i].transform.parent = Forest.transform;
                 i++;
             }
@@ -108,9 +125,11 @@ public class SimulationController : MonoBehaviour {
      public bool lidar(Vector3[] treeDirections)
     {
         Vector2 temp = new Vector2(0,0);
+         //initilize memory space for array to size of number of trees
         treePolor = new Vector2[numberOfTrees]; 
-        bool turn = true;
         Vector3[] treePositions = new Vector3[numberOfTrees];
+        bool turn = true;
+         //loop stores the polor coordinates of every tree into treePolor[]
          for(int i = 0;i < numberOfTrees;i++)
         {   
             treePositions[i] = AForest[i].transform.position;
@@ -125,17 +144,19 @@ public class SimulationController : MonoBehaviour {
         }
 
         TreeSort(treePolor,treePositions);
+        //Stores the 2 closest trees absolute position into treeDirections[]
         treeDirections[0] = treePositions[0];
         treeDirections[1] = treePositions[1];
+        //Returns wether to turn or not
         return turn;
     }
-    //Works
+    //Function returns the cars curent position
     public Vector3 GPS()
     {   Vector3 Ret = new Vector3(0,0,0);
         Ret = Car.transform.position;
         return Ret;
     }
-
+    //Sorts by the closet positive Polar Coordinates and applys that result to sort the cartesion absolute position  
     void TreeSort(Vector2[] polarTrees,Vector3[] cartesianTrees){
     /* polarTrees is an n-element array of  Vector2's*/
     int i, j, min;
@@ -158,17 +179,19 @@ public class SimulationController : MonoBehaviour {
     }
     return;
 }
-
+    //Moves car incrementilly closer to next spot
     void MoveCar()
     {
         float step = speed;
         bool turn;
+        //Move towards next spot if you are not at it
         if(currentPosition != nextSpot)
         {
             Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);            
         }
         currentPosition = GPS();
         turn = lidar(depthTree);
+        //If turn is true set manual next spot and change the direction
         if (turn)
         {
             inProcessOfTurning = true;
@@ -178,7 +201,7 @@ public class SimulationController : MonoBehaviour {
         }
         else nextSpot = spotDetermination(depthTree);
     }
-
+    //Determines next spot based on closest trees
     Vector3 spotDetermination(Vector3[] treesPoints)
     {
         Vector3 ret;
@@ -192,6 +215,7 @@ public class SimulationController : MonoBehaviour {
         }
         return ret;
     }
+    //Moves Car incremently to next spot (Rotating bot work in progress)
     void turn()
     {
         float step = speed;
@@ -209,7 +233,7 @@ public class SimulationController : MonoBehaviour {
         }
         return;
     }
-
+    //Checks if the bot needs to stop (That there are no more trees)
     bool checkStop(Vector2[] treePoints)
     {
         bool ret = true;
@@ -217,7 +241,7 @@ public class SimulationController : MonoBehaviour {
         else if ((treePoints[0].y >= 90 && treePoints[1].y <= 90) || (treePoints[0].y <= 90 && treePoints[1].y >= 90)) ret = false; 
         return ret;
     }
-
+    //
     void rotate()
     {   float step =  15f;
         Car.transform.eulerAngles = Vector3.Lerp(transform.eulerAngles, targetAngles, step*Time.deltaTime);
