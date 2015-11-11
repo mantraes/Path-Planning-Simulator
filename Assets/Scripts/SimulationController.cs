@@ -3,8 +3,8 @@ using System.Collections;
 public class SimulationController : MonoBehaviour {
 
     //Size of Map variables x and y
-    public float xOfMap;
-    public float zOfMap;
+    private float xOfMap;
+    private float zOfMap;
     private Vector3 sizeOfMap;
     private Vector3 locationOfMap = new Vector3(0,0,0);
     private Quaternion OrientationOfMap = new Quaternion();
@@ -17,7 +17,7 @@ public class SimulationController : MonoBehaviour {
     //Holds the location of trees local position to the bot
     private Vector3[] treeLocalPositions;
     //Number of trees
-    private int numberOfTrees = 20;
+    private int numberOfTrees;
     //Tree GameObject
     public GameObject Tree;
     //Connection to parent gameobject of all the trees 
@@ -51,6 +51,8 @@ public class SimulationController : MonoBehaviour {
     //bool that is true if it is time to rotate
     private bool rotating;
     //use this for initiation of variables before the start
+    private GameObject sharedVariables;
+    private SharedVariables sharedVariablesScript;
     void awake()
     {
         xOfMap = 4f;
@@ -61,6 +63,22 @@ public class SimulationController : MonoBehaviour {
 
     }
 	void Start () {
+        sharedVariables = GameObject.Find("SharedVariables");
+        if (sharedVariables == null) ;
+        else sharedVariablesScript = sharedVariables.GetComponent<SharedVariables>();
+        if (sharedVariables == null)
+        {
+            xOfMap = 4f;
+            zOfMap = 4f;
+            numberOfTrees = 20;
+
+        }
+        else
+        {
+            xOfMap = sharedVariablesScript.sizeOfMap;
+            zOfMap = sharedVariablesScript.sizeOfMap;
+            numberOfTrees = sharedVariablesScript.numOfTrees;
+        }
         inProcessOfTurning = false;
         stopped = false;
         rotating = false;
@@ -95,17 +113,19 @@ public class SimulationController : MonoBehaviour {
     {
         Instantiate(Map,locationOfMap,OrientationOfMap);
         int i = 0; 
-        float k = 0;
+        int k = 0;
         float xscale = 5f; //used to scale seperation of trees in x direction
         float zscale = 2.5f; //used to scale seperation of tree in z direction
-        int treesInColumn = 4; 
+        int numOfRows;
+        if (sharedVariables == null) numOfRows = 4;
+        else numOfRows = sharedVariablesScript.numOfRows; 
         float xshift = -8f; // Gives the shift of the bunch of trees in the x direction
         float zshift = -10f; // Gives the shift of the bunch of trees in the z direction
         GameObject temp; //Temp gameobject to store created trees 
         //Loop instatiates the trees in the parent forest
         while (i < numberOfTrees)
         {
-            for (float j = 0; i < numberOfTrees && j < treesInColumn;j++)
+            for (float j = 0; i < numberOfTrees && j < numOfRows;j++)
             {
                 Vector3 spawnPosition = new Vector3(k*xscale + xshift, 2.5f, j*zscale + zshift);
                 Quaternion spawnRotation = new Quaternion();
@@ -219,7 +239,6 @@ public class SimulationController : MonoBehaviour {
     void turn()
     {
         float step = speed;
-        Vector3 newDir;
         Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);
         //newDir = Vector3.RotateTowards(Car.transform.position, nextRotation, step ,0f);
         //transform.rotation = Quaternion.LookRotation(newDir);
@@ -244,9 +263,8 @@ public class SimulationController : MonoBehaviour {
     //
     void rotate()
     {   float step =  15f;
-        Car.transform.eulerAngles = Vector3.Lerp(transform.eulerAngles, targetAngles, step*Time.deltaTime);
-        if (Mathf.Round(Car.transform.eulerAngles.y) == Mathf.Round(targetAngles.y)) rotating = false;
-        else if ((Mathf.Round(Car.transform.eulerAngles.y) == 360 && Mathf.Round(targetAngles.y) == 0) || (Mathf.Round(Car.transform.eulerAngles.y) == 0 && Mathf.Round(targetAngles.y) == 360)) rotating = false;
+        Car.transform.Rotate(Vector3.up * Time.deltaTime);
+        
         return;
     }
 
