@@ -50,6 +50,8 @@ public class SimulationController : MonoBehaviour {
     private bool stopped;
     //bool that is true if it is time to rotate
     private bool rotating;
+    //Holds the current rotation of bot
+    private Quaternion rotation;
     //use this for initiation of variables before the start
     private GameObject sharedVariables;
     private SharedVariables sharedVariablesScript;
@@ -60,7 +62,6 @@ public class SimulationController : MonoBehaviour {
         radiusTree = 0.125f;
         heightTree = 2.5f;
         numberOfTrees = 20;
-
     }
 	void Start () {
         sharedVariables = GameObject.Find("SharedVariables");
@@ -215,8 +216,8 @@ public class SimulationController : MonoBehaviour {
         if (turn)
         {
             inProcessOfTurning = true;
-            nextSpot = currentPosition+new Vector3(5f, 0, 7f*direction);
-            nextRotation = currentPosition+new Vector3(5f,0,0);
+            nextSpot = currentPosition+new Vector3(5f, 0, direction*7f);
+            nextRotation.y = Car.transform.rotation.eulerAngles.y + direction*180f;
             direction = -1*direction;
         }
         else nextSpot = spotDetermination(depthTree);
@@ -239,16 +240,17 @@ public class SimulationController : MonoBehaviour {
     void turn()
     {
         float step = speed;
+        float rStep = speed * 10;
         Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);
-        //newDir = Vector3.RotateTowards(Car.transform.position, nextRotation, step ,0f);
-        //transform.rotation = Quaternion.LookRotation(newDir);
-        if (Car.transform.position == nextSpot)
+        Car.transform.Rotate(Vector3.up,-direction*rStep);
+
+        if (Car.transform.position == nextSpot && Mathf.Round(Car.transform.rotation.eulerAngles.y) == Mathf.Round(nextRotation.y))
         {
             inProcessOfTurning = false;
             rotating = true;
             lidar(depthTree);
             stopped = checkStop(treePolor);
-            targetAngles = new Vector3(0, Car.transform.eulerAngles.y + 180f * Vector3.up.y,0);
+            //targetAngles = new Vector3(0, Car.transform.eulerAngles.y + 180f * Vector3.up.y,0);
         }
         return;
     }
@@ -262,9 +264,9 @@ public class SimulationController : MonoBehaviour {
     }
     //
     void rotate()
-    {   float step =  15f;
-        Car.transform.Rotate(Vector3.up * Time.deltaTime);
-        
+    {
+
+        rotating = false;
         return;
     }
 
