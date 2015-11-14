@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 public class SimulationController : MonoBehaviour {
 
@@ -41,7 +42,7 @@ public class SimulationController : MonoBehaviour {
     //not used right now
     private Vector3 targetAngles;
     //Variable that holds the speed for the bot
-    private float speed = .1f;
+    private float speed = .05f;
     //bool that is true if bot is turning
     private bool inProcessOfTurning;
     //Holds wich direction bot is going (if positive bot is heading in positive Z direction) 
@@ -55,6 +56,15 @@ public class SimulationController : MonoBehaviour {
     //use this for initiation of variables before the start
     private GameObject sharedVariables;
     private SharedVariables sharedVariablesScript;
+    private float safeDistance = 1.7f;
+    //UI variables
+    private Text Firsttreeposition;
+    private Text Secondtreeposition;
+    private Text GPSposition;
+    private Text IMUrotation;
+    private int GPSUpdate;
+    private int LidarUpdate;
+    private int refresh = 20;
     void awake()
     {
         xOfMap = 4f;
@@ -65,25 +75,34 @@ public class SimulationController : MonoBehaviour {
     }
 	void Start () {
         sharedVariables = GameObject.Find("SharedVariables");
-        if (sharedVariables == null) ;
-        else sharedVariablesScript = sharedVariables.GetComponent<SharedVariables>();
+        Firsttreeposition = GameObject.Find("First Closest Tree").GetComponent<Text>();
+        Secondtreeposition = GameObject.Find("Second Closest Tree").GetComponent<Text>();
+        GPSposition = GameObject.Find("Position Data").GetComponent<Text>();
+        IMUrotation = GameObject.Find("Rotation Data").GetComponent<Text>();
+        Firsttreeposition.text = "0";
+        Secondtreeposition.text = "0";
+        GPSposition.text = "0";
+        IMUrotation.text = "0";
         if (sharedVariables == null)
         {
             xOfMap = 4f;
             zOfMap = 4f;
-            numberOfTrees = 20;
-
+            numberOfTrees = 14;
         }
         else
         {
+            sharedVariablesScript = sharedVariables.GetComponent<SharedVariables>();
             xOfMap = sharedVariablesScript.sizeOfMap;
             zOfMap = sharedVariablesScript.sizeOfMap;
             numberOfTrees = sharedVariablesScript.numOfTrees;
         }
+
         inProcessOfTurning = false;
         stopped = false;
         rotating = false;
         direction = 1;
+        GPSUpdate = 0;
+        LidarUpdate = 0;
         sizeOfTree = new Vector3(2*radiusTree, heightTree, 2*radiusTree);
         sizeOfMap = new Vector3(xOfMap,1,zOfMap);
         OrientationOfMap = Quaternion.identity;
@@ -103,9 +122,9 @@ public class SimulationController : MonoBehaviour {
 
     //Update is called over fixed interval
     void FixedUpdate () {
-        if (stopped) ;
+        if (stopped) 
+            ;
         else if (inProcessOfTurning) turn();
-        //else if (rotating) rotate();
         else MoveCar();
     }
 
@@ -162,9 +181,21 @@ public class SimulationController : MonoBehaviour {
             else temp.y = (Mathf.Atan2(treeLocalPositions[i].z, treeLocalPositions[i].x) * Mathf.Rad2Deg)*direction;
             treePolor[i] = temp;
             if (Mathf.Round(treePolor[i].y) < 178 && treePolor[i].y > 2) turn = false;
+            if (direction == -1)
+            {
+                if (treePolor[i].y < 90 && Mathf.Round(treePolor[i].y) > 0) treePolor[i].y = treePolor[i].y + 90f;
+                else if(treePolor[i].y > 90 && Mathf.Round(treePolor[i].y) < 180)treePolor[i].y = treePolor[i].y - 90f;
+            }
         }
 
         TreeSort(treePolor,treePositions);
+        if (LidarUpdate == refresh)
+        {
+            Firsttreeposition.text = "Mag: " + treePolor[0].x.ToString("F2") + "     " + treePolor[0].y.ToString("F2") + " degrees";
+            Secondtreeposition.text = "Mag: " + treePolor[1].x.ToString("F2") + "     " + treePolor[1].y.ToString("F2") + " degrees";
+            LidarUpdate = 0;
+        }
+        LidarUpdate++;
         //Stores the 2 closest trees absolute position into treeDirections[]
         treeDirections[0] = treePositions[0];
         treeDirections[1] = treePositions[1];
@@ -175,6 +206,13 @@ public class SimulationController : MonoBehaviour {
     public Vector3 GPS()
     {   Vector3 Ret = new Vector3(0,0,0);
         Ret = Car.transform.position;
+        if (GPSUpdate == refresh)
+        {
+            GPSposition.text = "x = " + Ret.x.ToString("F2") + " z = " + Ret.z.ToString("F2");
+            IMUrotation.text = Car.transform.rotation.eulerAngles.y.ToString("F2") + " degrees";
+            GPSUpdate = 0;
+        }
+        GPSUpdate++;
         return Ret;
     }
     //Sorts by the closet positive Polar Coordinates and applys that result to sort the cartesion absolute position  
@@ -188,15 +226,39 @@ public class SimulationController : MonoBehaviour {
     /* find minimum element from i to numberOfTrees-1 */
     min = i; /* i-th element might be minimum */
     for (j=i+1; j< numberOfTrees; j++) {
-        if (Mathf.Round(polarTrees[min].y) > 178 || (Mathf.Round(polarTrees[min].y) < 2)) 
+        if (Mathf.Round(polarTrees[min].y) > 178 || (Mathf.Round(polarTrees[min].y) < 2))
             min = j;
-        else if (polarTrees[j].x < polarTrees[min].x && polarTrees[j].y > 2 && Mathf.Round(polarTrees[j].y) < 178) 
-            min = j;
-    }
+        else if (polarTrees[min].y < 90 && polarTrees[j].y < polarTrees[min].y && polarTrees[min].x < polarTrees[j].x);
+        else if (polarTrees[min].y > 90 && polarTrees[j].y > polarTrees[min].y && polarTrees[min].x < polarTrees[j].x);
+        else if (polarTrees[j].x < polarTrees[min].x && polarTrees[j].y > 2 && Mathf.Round(polarTrees[j].y) < 178)
+                min = j;
+        }
     /* exchange a[i] and a[min] */
     tmp = polarTrees[i]; tmp3 = cartesianTrees[i];
     polarTrees[i] = polarTrees[min]; cartesianTrees[i] = cartesianTrees[min];
     polarTrees[min] = tmp; cartesianTrees[min] = tmp3;
+    }
+    for (i = 1; i < numberOfTrees - 1; i++)
+    {
+        /* find minimum element from i to numberOfTrees-1 */
+        min = i; /* i-th element might be minimum */
+        for (j = i + 1; j < numberOfTrees; j++)
+        {
+            if(polarTrees[0].y < 90 && polarTrees[min].y < 90  && polarTrees[j].y > 2 && Mathf.Round(polarTrees[j].y) < 178) min =j; 
+            else if(polarTrees[0].y > 90 && polarTrees[min].y > 90  && polarTrees[j].y > 2 && Mathf.Round(polarTrees[j].y) < 178) min =j;
+            else if (polarTrees[0].y < 90 && polarTrees[j].y > 90 && polarTrees[j].y > 2 && Mathf.Round(polarTrees[j].y) < 178)
+            {
+                if (polarTrees[j].x < polarTrees[min].x) min = j; 
+            }
+            else if (polarTrees[0].y > 90 && polarTrees[j].y < 90 && polarTrees[j].y > 2 && Mathf.Round(polarTrees[j].y) < 178)
+            {
+                if (polarTrees[j].x < polarTrees[min].x) min = j;
+            }
+        }
+        /* exchange a[i] and a[min] */
+        tmp = polarTrees[i]; tmp3 = cartesianTrees[i];
+        polarTrees[i] = polarTrees[min]; cartesianTrees[i] = cartesianTrees[min];
+        polarTrees[min] = tmp; cartesianTrees[min] = tmp3;
     }
     return;
 }
@@ -221,6 +283,7 @@ public class SimulationController : MonoBehaviour {
             direction = -1*direction;
         }
         else nextSpot = spotDetermination(depthTree);
+        stopped = checkStop(treePolor);
     }
     //Determines next spot based on closest trees
     Vector3 spotDetermination(Vector3[] treesPoints)
@@ -243,19 +306,18 @@ public class SimulationController : MonoBehaviour {
         float rStep = speed * 10;
         Car.transform.position = Vector3.MoveTowards(Car.transform.position, nextSpot, step);
         Car.transform.Rotate(Vector3.up,-direction*rStep);
-
+        GPS();
         if (Car.transform.position == nextSpot && Mathf.Round(Car.transform.rotation.eulerAngles.y) == Mathf.Round(nextRotation.y))
         {
             inProcessOfTurning = false;
             rotating = true;
             lidar(depthTree);
-            stopped = checkStop(treePolor);
-            //targetAngles = new Vector3(0, Car.transform.eulerAngles.y + 180f * Vector3.up.y,0);
+            stopped = checkStopt(treePolor);
         }
         return;
     }
     //Checks if the bot needs to stop (That there are no more trees)
-    bool checkStop(Vector2[] treePoints)
+    bool checkStopt(Vector2[] treePoints)
     {
         bool ret = true;
         if ((treePoints[0].y < 2 && treePoints[1].y > 178) || (treePoints[1].y < 2 && treePoints[0].y > 178)) ret = false;
@@ -263,6 +325,14 @@ public class SimulationController : MonoBehaviour {
         return ret;
     }
     //
+
+    bool checkStop(Vector2[] treePoints)
+    {
+        bool ret = true;
+        if((Mathf.Round(treePoints[0].y) <= 90) || (Mathf.Round(treePoints[1].y) <= 90)) ret = false;
+        return ret;
+    }
+
     void rotate()
     {
 
