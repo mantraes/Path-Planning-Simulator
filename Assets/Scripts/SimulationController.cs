@@ -56,6 +56,7 @@ public class SimulationController : MonoBehaviour {
     //use this for initiation of variables before the start
     private GameObject sharedVariables;
     private SharedVariables sharedVariablesScript;
+    public int seed;
     private float safeDistance = 1.7f;
     //UI variables
     private Text Firsttreeposition;
@@ -95,8 +96,9 @@ public class SimulationController : MonoBehaviour {
             xOfMap = sharedVariablesScript.sizeOfMap;
             zOfMap = sharedVariablesScript.sizeOfMap;
             numberOfTrees = sharedVariablesScript.numOfTrees;
+            seed = sharedVariablesScript.seed;
         }
-
+        Random.seed = seed;
         inProcessOfTurning = false;
         stopped = false;
         rotating = false;
@@ -135,7 +137,7 @@ public class SimulationController : MonoBehaviour {
         int i = 0; 
         int k = 0;
         float xscale = 5f; //used to scale seperation of trees in x direction
-        float zscale = 2.5f; //used to scale seperation of tree in z direction
+        float zscale = 5f; //used to scale seperation of tree in z direction
         int numOfRows;
         if (sharedVariables == null) numOfRows = 4;
         else numOfRows = sharedVariablesScript.numOfRows; 
@@ -147,7 +149,12 @@ public class SimulationController : MonoBehaviour {
         {
             for (float j = 0; i < numberOfTrees && j < numOfRows;j++)
             {
-                Vector3 spawnPosition = new Vector3(k*xscale + xshift, 2.5f, j*zscale + zshift);
+                if (seed != 0)
+                {
+                    xshift += Random.Range(-.5f, .5f);
+                    zshift += Random.Range(-.5f, .5f);
+                }    
+                Vector3 spawnPosition = new Vector3(k * xscale +  xshift, 2.5f, j * zscale + zshift);
                 Quaternion spawnRotation = new Quaternion();
                 spawnRotation = Quaternion.identity;
                 temp = Instantiate(Tree, spawnPosition, spawnRotation) as GameObject;
@@ -180,7 +187,7 @@ public class SimulationController : MonoBehaviour {
             else if (treeLocalPositions[i].z == 0 && treeLocalPositions[i].x == 0) temp.y = 0;
             else temp.y = (Mathf.Atan2(treeLocalPositions[i].z, treeLocalPositions[i].x) * Mathf.Rad2Deg)*direction;
             treePolor[i] = temp;
-            if (Mathf.Round(treePolor[i].y) < 178 && treePolor[i].y > 2) turn = false;
+            if (Mathf.Round(treePolor[i].y) < 172 && treePolor[i].y > 8) turn = false;
             if (direction == -1)
             {
                 if (treePolor[i].y < 90 && Mathf.Round(treePolor[i].y) > 0) treePolor[i].y = treePolor[i].y + 90f;
@@ -340,6 +347,11 @@ public class SimulationController : MonoBehaviour {
         return;
     }
 
+    public void Restart()
+    {
+        Application.LoadLevel("GUI");
+
+    }
 
 
 

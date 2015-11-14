@@ -11,6 +11,8 @@ public class GUIController : MonoBehaviour {
     public Slider NOFRslider;
     public Text NOFRvalue;
     public Text IFmapSize;
+    public Slider Seedslider;
+    public Text Seedvalue;
     public GameObject sharedVariables;
     private SharedVariables sharedVariablesScript;
     void Awake()
@@ -20,12 +22,13 @@ public class GUIController : MonoBehaviour {
     void Start() {
         NOFTvalue.text = NOFTslider.value.ToString();
         NOFRvalue.text = NOFRslider.value.ToString();
+        if (Seedslider.value == 1) Seedvalue.text = "None";
+        else Seedvalue.text = (Seedslider.value - 1f).ToString();
         sharedVariables = GameObject.Find("SharedVariables");
         sharedVariablesScript = sharedVariables.GetComponent<SharedVariables>();
         sharedVariablesScript.numOfRows = (int)NOFRslider.value;
         sharedVariablesScript.numOfTrees = (int)NOFTslider.value;
-        ;
-
+        sharedVariablesScript.seed = (int)Seedslider.value - 1;
     }
 
     public void StartScene()
@@ -44,6 +47,10 @@ public class GUIController : MonoBehaviour {
     public void changeValue() { 
     NOFTvalue.text = NOFTslider.value.ToString();
     NOFRvalue.text = NOFRslider.value.ToString();
+    if (Seedslider.value == 1) Seedvalue.text = "None";
+    else Seedvalue.text = (Seedslider.value - 1f).ToString();
     }
+
+    
 
 }
