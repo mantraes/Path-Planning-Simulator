@@ -42,7 +42,7 @@ public class SimulationController : MonoBehaviour {
     //not used right now
     private Vector3 targetAngles;
     //Variable that holds the speed for the bot
-    private float speed = .05f;
+    private float speed = .1f;
     //bool that is true if bot is turning
     private bool inProcessOfTurning;
     //Holds wich direction bot is going (if positive bot is heading in positive Z direction) 
@@ -353,6 +353,8 @@ public class SimulationController : MonoBehaviour {
 
     }
 
-
-
+    public void quit()
+    {
+        Application.Quit();
+    }
 }

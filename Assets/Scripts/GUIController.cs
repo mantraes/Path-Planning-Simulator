@@ -36,6 +36,7 @@ public class GUIController : MonoBehaviour {
         sharedVariablesScript.numOfRows = (int)NOFRslider.value;
         sharedVariablesScript.numOfTrees = (int)NOFTslider.value;
         sharedVariablesScript.sizeOfMap = int.Parse(IFmapSize.text);
+        sharedVariablesScript.seed = (int)Seedslider.value;
         Application.LoadLevel("Standard_Situation");
     }
 	
