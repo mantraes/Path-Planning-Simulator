@@ -12,6 +12,8 @@ public class GUIController : MonoBehaviour {
     public Text NOFRvalue;
     public Slider Seedslider;
     public Text Seedvalue;
+    public Slider Randomslider;
+    public Text Randomvalue;
     public GameObject sharedVariablesPre;
     private GameObject sharedVariables;
     private SharedVariables sharedVariablesScript;
@@ -27,11 +29,13 @@ public class GUIController : MonoBehaviour {
             sharedVariablesScript = sharedVariables.GetComponent<SharedVariables>();
             NOFTvalue.text = NOFTslider.value.ToString();
             NOFRvalue.text = NOFRslider.value.ToString();
+            Randomvalue.text = Randomslider.value.ToString();
             if (Seedslider.value == 1) Seedvalue.text = "None";
             else Seedvalue.text = (Seedslider.value - 1f).ToString();
             sharedVariablesScript.numOfRows = (int)NOFRslider.value;
             sharedVariablesScript.numOfTrees = (int)NOFTslider.value;
             sharedVariablesScript.seed = (int)Seedslider.value - 1;
+            sharedVariablesScript.randomValue = (int)Randomslider.value;
         }
         else {
             sharedVariablesScript = sharedVariables.GetComponent<SharedVariables>();
@@ -42,6 +46,7 @@ public class GUIController : MonoBehaviour {
             NOFRslider.value = sharedVariablesScript.numOfRows;
             NOFTslider.value = sharedVariablesScript.numOfTrees;
             Seedslider.value = sharedVariablesScript.seed + 1;
+            Randomslider.value = sharedVariablesScript.randomValue;
         }
     }
 
@@ -51,6 +56,7 @@ public class GUIController : MonoBehaviour {
         sharedVariablesScript.numOfRows = (int)NOFRslider.value;
         sharedVariablesScript.numOfTrees = (int)NOFTslider.value;
         sharedVariablesScript.seed = (int)Seedslider.value - 1;
+        sharedVariablesScript.randomValue = Randomslider.value;
         DontDestroyOnLoad(sharedVariables.transform.gameObject);
         Application.LoadLevel("Standard_Situation");
     }
@@ -65,7 +71,9 @@ public class GUIController : MonoBehaviour {
     NOFRvalue.text = NOFRslider.value.ToString();
     if (Seedslider.value == 1) Seedvalue.text = "None";
     else Seedvalue.text = (Seedslider.value - 1f).ToString();
+    Randomvalue.text = Randomslider.value.ToString("F2");
     }
+        
 
     
 

@@ -151,8 +151,8 @@ public class SimulationController : MonoBehaviour {
             {
                 if (seed != 0)
                 {
-                    xshift = -8f + Random.Range(-1f, 1f);
-                    zshift = -10f + Random.Range(-.5f, .5f);
+                    xshift = -8f + Random.Range((-sharedVariablesScript.randomValue+.5f), (sharedVariablesScript.randomValue-.5f));
+                    zshift = -10f + Random.Range(-sharedVariablesScript.randomValue, sharedVariablesScript.randomValue);
                 }
                 else
                 {
