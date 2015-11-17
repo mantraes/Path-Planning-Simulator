@@ -65,7 +65,7 @@ public class SimulationController : MonoBehaviour {
     private Text IMUrotation;
     private int GPSUpdate;
     private int LidarUpdate;
-    private int refresh = 20;
+    private int refresh = 15;
     void awake()
     {
         xOfMap = 4f;
@@ -75,7 +75,7 @@ public class SimulationController : MonoBehaviour {
         numberOfTrees = 20;
     }
 	void Start () {
-        sharedVariables = GameObject.Find("SharedVariables");
+        sharedVariables = GameObject.FindGameObjectWithTag("Variables");
         Firsttreeposition = GameObject.Find("First Closest Tree").GetComponent<Text>();
         Secondtreeposition = GameObject.Find("Second Closest Tree").GetComponent<Text>();
         GPSposition = GameObject.Find("Position Data").GetComponent<Text>();
@@ -88,16 +88,16 @@ public class SimulationController : MonoBehaviour {
         {
             xOfMap = 4f;
             zOfMap = 4f;
-            numberOfTrees = 14;
+            numberOfTrees = 20;
         }
         else
         {
             sharedVariablesScript = sharedVariables.GetComponent<SharedVariables>();
-            xOfMap = sharedVariablesScript.sizeOfMap;
-            zOfMap = sharedVariablesScript.sizeOfMap;
             numberOfTrees = sharedVariablesScript.numOfTrees;
             seed = sharedVariablesScript.seed;
         }
+        xOfMap = (numberOfTrees/sharedVariablesScript.numOfRows) + 6;
+        zOfMap = (sharedVariablesScript.numOfRows) + 6;
         Random.seed = seed;
         inProcessOfTurning = false;
         stopped = false;
@@ -132,12 +132,12 @@ public class SimulationController : MonoBehaviour {
 
     //Function to Spawn Forest
     void SpawnForest()
-    {
+    {   
         Instantiate(Map,locationOfMap,OrientationOfMap);
         int i = 0; 
         int k = 0;
-        float xscale = 5f; //used to scale seperation of trees in x direction
-        float zscale = 5f; //used to scale seperation of tree in z direction
+        float xscale = 8f; //used to scale seperation of trees in x direction
+        float zscale = 8f; //used to scale seperation of tree in z direction
         int numOfRows;
         if (sharedVariables == null) numOfRows = 4;
         else numOfRows = sharedVariablesScript.numOfRows; 
@@ -151,9 +151,14 @@ public class SimulationController : MonoBehaviour {
             {
                 if (seed != 0)
                 {
-                    xshift += Random.Range(-.5f, .5f);
-                    zshift += Random.Range(-.5f, .5f);
-                }    
+                    xshift = -8f + Random.Range(-1f, 1f);
+                    zshift = -10f + Random.Range(-.5f, .5f);
+                }
+                else
+                {
+                    xshift = -8f; // Gives the shift of the bunch of trees in the x direction
+                    zshift = -10f;
+                }
                 Vector3 spawnPosition = new Vector3(k * xscale +  xshift, 2.5f, j * zscale + zshift);
                 Quaternion spawnRotation = new Quaternion();
                 spawnRotation = Quaternion.identity;
@@ -285,7 +290,7 @@ public class SimulationController : MonoBehaviour {
         if (turn)
         {
             inProcessOfTurning = true;
-            nextSpot = currentPosition+new Vector3(5f, 0, direction*7f);
+            nextSpot = currentPosition+new Vector3(7f, 0, direction*7f);
             nextRotation.y = Car.transform.rotation.eulerAngles.y + direction*180f;
             direction = -1*direction;
         }
@@ -350,7 +355,6 @@ public class SimulationController : MonoBehaviour {
     public void Restart()
     {
         Application.LoadLevel("GUI");
-
     }
 
     public void quit()

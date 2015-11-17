@@ -5,7 +5,6 @@ public class SharedVariables : MonoBehaviour {
 
     public int numOfTrees; 
     public int numOfRows;
-    public int sizeOfMap;
     public int seed;
 
 	// Use this for initialization
